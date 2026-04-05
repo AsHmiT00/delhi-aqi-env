@@ -1,0 +1,153 @@
+name: delhi-aqi-policy-env
+version: "1.0.0"
+description: >
+  An RL environment for intelligent Delhi air quality management.
+  An agent controls 6 real-world policy levers (truck bans, odd-even traffic
+  restrictions, construction halts, industrial caps, school closures, WFH mandates)
+  to minimize PM2.5 AQI while balancing economic disruption.
+
+  Unlike Delhi's current static GRAP system, the RL agent learns to act
+  proactively using 48-hour AQI forecasts and Punjab stubble fire satellite
+  indices — preventing crises instead of reacting to them.
+
+  Grounded in real Delhi atmospheric physics: dispersion model calibrated
+  to CPCB monitoring data, seasonal patterns, and wind-driven transport
+  of pollutants from Punjab/Haryana stubble burning.
+
+tags:
+  - real-world
+  - policy
+  - india
+  - environment
+  - health
+  - climate
+  - openenv
+
+author: "Hackathon Participant"
+repository: "https://huggingface.co/spaces/YOUR_USERNAME/delhi-aqi-env"
+
+observation_space:
+  type: object
+  description: "AQI readings, weather conditions, 48h forecasts, stubble fire index"
+  fields:
+    current_aqi:
+      type: float
+      range: [0, 600]
+      description: "Current PM2.5 AQI in Delhi"
+    forecast_24h:
+      type: float
+      range: [0, 600]
+      description: "Predicted AQI in 24 hours with no intervention"
+    forecast_48h:
+      type: float
+      range: [0, 600]
+      description: "Predicted AQI in 48 hours — key signal for proactive action"
+    wind_speed:
+      type: float
+      range: [0, 30]
+      unit: "m/s"
+    wind_direction:
+      type: float
+      range: [0, 360]
+      unit: "degrees"
+    mixing_height:
+      type: float
+      range: [50, 3000]
+      unit: "meters"
+      description: "Atmospheric mixing height — low values mean pollution is trapped"
+    humidity:
+      type: float
+      range: [0, 100]
+      unit: "percent"
+    stubble_index:
+      type: float
+      range: [0, 100]
+      description: "Punjab/Haryana crop fire intensity from satellite data"
+    step_number:
+      type: integer
+      description: "Episode step (each step = 6 hours)"
+    day_of_week:
+      type: integer
+      range: [0, 6]
+      description: "0=Monday, 6=Sunday"
+    active_policies:
+      type: array
+      items: integer
+      description: "Current [truck_ban, odd_even, construction, industry_cap, schools, wfh] levels"
+    aqi_category:
+      type: string
+      enum: ["Good", "Satisfactory", "Moderate", "Poor", "Very Poor", "Severe"]
+
+action_space:
+  type: object
+  description: "6 independent policy levers with discrete intensity levels"
+  fields:
+    truck_ban:
+      type: integer
+      range: [0, 2]
+      values: ["no ban", "night only 10pm-6am", "full day ban"]
+    odd_even:
+      type: integer
+      range: [0, 2]
+      values: ["off", "peak hours only", "all day"]
+    construction_ban:
+      type: integer
+      range: [0, 2]
+      values: ["normal", "strict dust norms", "non-essential halted"]
+    industry_cap:
+      type: integer
+      range: [0, 3]
+      values: ["100% capacity", "75% capacity", "50% capacity", "25% essential only"]
+    schools_closed:
+      type: integer
+      range: [0, 1]
+      values: ["open", "closed"]
+    wfh_level:
+      type: integer
+      range: [0, 2]
+      values: ["off", "advisory", "mandatory for govt offices"]
+
+tasks:
+  - id: aqi_stabilize_easy
+    name: "Stabilize Moderate Pollution"
+    difficulty: easy
+    max_steps: 10
+    description: >
+      Starting from AQI 252 (Poor category), keep AQI below 300 for all
+      10 steps (2.5 days) while minimizing economic disruption.
+      Tests basic policy understanding and proportionate response.
+    grader: "grade_task1_stabilize in graders.py"
+    expected_score_range:
+      random_agent: [0.2, 0.4]
+      baseline_grap: [0.5, 0.65]
+      good_agent: [0.8, 1.0]
+
+  - id: aqi_crisis_medium
+    name: "Severe AQI Crisis Recovery"
+    difficulty: medium
+    max_steps: 20
+    description: >
+      Starting from AQI 422 (Severe), reduce to below 250 within 20 steps
+      (5 days), then sustain improvement. Tests decisive action and
+      controlled policy relaxation after recovery.
+    grader: "grade_task2_crisis in graders.py"
+    expected_score_range:
+      random_agent: [0.1, 0.2]
+      baseline_grap: [0.35, 0.5]
+      good_agent: [0.65, 0.9]
+
+  - id: aqi_stubble_hard
+    name: "Stubble Burning Emergency"
+    difficulty: hard
+    max_steps: 28
+    description: >
+      Starting from AQI 182 (Moderate — air seems fine), a stubble burning
+      event spikes at step 4. Agent must use forecast_48h to act BEFORE
+      the spike arrives. Prevents AQI from exceeding 350 over 7 days.
+      Purely reactive agents (including GRAP) score ~0.2 on this task.
+      Only forecast-aware proactive agents score above 0.6.
+    grader: "grade_task3_stubble in graders.py"
+    expected_score_range:
+      random_agent: [0.0, 0.15]
+      baseline_grap: [0.15, 0.30]
+      proactive_agent: [0.65, 0.90]
