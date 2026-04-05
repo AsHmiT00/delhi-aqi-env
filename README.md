@@ -254,3 +254,8 @@ Coefficients calibrated to match real Delhi CPCB PM2.5 patterns (2019–2023).
 3. **Multi-objective reward** — health vs economy tradeoff forces nuanced policies
 4. **Difficulty progression** — easy/medium/hard tasks test different capabilities
 5. **Deployable** — every data source has a real public API (CPCB, IMD, NASA FIRMS)
+
+# Prepend the metadata to README.md
+$content = Get-Content README.md -Raw
+$metadata = "---`ntitle: Delhi AQI Env`nemoji: 🌫️`ncolorFrom: blue`ncolorTo: green`nsdk: docker`napp_port: 7860`npinned: false`n---`n`n"
+Set-Content README.md ($metadata + $content)
