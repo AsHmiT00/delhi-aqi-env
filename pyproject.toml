@@ -1,10 +1,23 @@
 ﻿[build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.backends.legacy:build"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "delhi-aqi-env"
 version = "1.0.0"
 description = "Delhi AQI Policy Environment for OpenEnv"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "openenv-core==0.2.3",
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic>=2.0",
+    "python-dotenv",
+    "httpx>=0.28.1",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio"]
