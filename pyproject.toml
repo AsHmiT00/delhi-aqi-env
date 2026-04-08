@@ -1,0 +1,11 @@
+@"
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "delhi-aqi-env"
+version = "1.0.0"
+description = "Delhi AQI Policy Environment for OpenEnv"
+requires-python = ">=3.11"
+"@ | Set-Content pyproject.toml
